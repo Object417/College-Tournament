@@ -1,16 +1,11 @@
-from modules.clearConsole import clearConsole
 from dotmap import DotMap
 from random  import randrange
-
-# Constants
-MAX_INDIVIDUALS = 5
-MIN_EVENTS = 1
-MAX_EVENTS = 5
-MAX_TEAMS = 4
-MAX_TEAM_MEMBERS = 5
+from modules.clearConsole import clearConsole
+from modules.constants import *
 
 # Create functions
-def createList(inputMsg: str, errMsg: str, MIN_LEN: int, MAX_LEN: int, mapFunc: callable) -> list:
+# TODO: mapFunc: callableAny could be replaced by more specific one. E. g. callable -> DotMap
+def createList(inputMsg: str, errMsg: str, MIN_LEN: int, MAX_LEN: int, mapFunc: callable):
   theList = input(inputMsg).split(",")
 
   if len(theList) != MIN_LEN and len(theList) != MAX_LEN:
@@ -18,6 +13,7 @@ def createList(inputMsg: str, errMsg: str, MIN_LEN: int, MAX_LEN: int, mapFunc: 
   else:
     return list(map(mapFunc, enumerate(theList)))
 
+# TODO: Could be replaced by universal function
 def createIndividuals():
   inputMsg = f"\nEnter {MAX_INDIVIDUALS} individuals' names: "
   errMsg = f"There must be {MAX_INDIVIDUALS} individuals"
@@ -45,15 +41,11 @@ def createEvents():
 
   return createList(inputMsg, errMsg, MIN_EVENTS, MAX_EVENTS, mapEvent)
 
-# Get functions
 def getMember(memberID: int, members: list, errMsg: str) -> DotMap:
   foundMember = [member for member in members if member.id == memberID]
+  return foundMember[0] if len(foundMember) == 1 else exit(errMsg)
 
-  if len(foundMember) != 1:
-    exit(errMsg)
-  else:
-    return foundMember[0]
-
+# TODO: Replace by universal function with a flag
 def mapMember(indexAndName: tuple):
   return DotMap({
     "id": indexAndName[0],
@@ -68,7 +60,6 @@ def mapEvent(indexAndName: tuple):
     "scoreMultiplier": randrange(1, 5)
   })
 
-# Print functions
 def printMembers(title: str, members: list, showScore: bool = False):
   print(title)
   for member in members:
@@ -77,7 +68,7 @@ def printMembers(title: str, members: list, showScore: bool = False):
 
     print(f"ID: {member.id}, {member.name} {memberMembers}{memberScore}")
 
-# Calculate functions
+# TODO: Replace by universal function
 def calcIndividuals():
   individuals = createIndividuals()
   printMembers("\nIndividuals:", individuals)
