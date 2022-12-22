@@ -2,7 +2,7 @@ from modules.clearConsole import clearConsole
 from dotmap import DotMap
 from random  import randrange
 
-# Constants2
+# Constants
 MAX_INDIVIDUALS = 5
 MIN_EVENTS = 1
 MAX_EVENTS = 5
@@ -10,167 +10,123 @@ MAX_TEAMS = 4
 MAX_TEAM_MEMBERS = 5
 
 # Create functions
-def createList(inputMessage, validator, mapFunc):
-  list = input(inputMessage).split(",")
+def createList(inputMsg: str, errMsg: str, MIN_LEN: int, MAX_LEN: int, mapFunc: callable) -> list:
+  theList = input(inputMsg).split(",")
 
-  validationResult = validator(list)
-  if not validationResult[0]:
-    exit(validationResult[1])
+  if len(theList) != MIN_LEN and len(theList) != MAX_LEN:
+    exit(errMsg)
   else:
-    return list(map(mapFunc, list))
-
-def createEvents():
-  inputMessage = f"\nEnter {MIN_EVENTS} or {MAX_EVENTS} events: "
-
-  def validator(events):
-    errMessage = f"There must be only {MIN_EVENTS} or {MAX_EVENTS} but got {len(events)}"
-
-    if len(events) != MIN_EVENTS or len(events) != MAX_EVENTS:
-      return [False, errMessage]
-    else:
-      return [True]
-  
-  def mapFunc(indexAndName):
-    return DotMap({
-      "id": indexAndName[0],
-      "name": indexAndName[1].strip(),
-      "scoreMultiplier": randrange(1, 5)
-  })
-
-  return createList(inputMessage, validator, mapFunc)
+    return list(map(mapFunc, enumerate(theList)))
 
 def createIndividuals():
-  inputMessage = f"\nEnter {MAX_INDIVIDUALS} individuals' names: "
+  inputMsg = f"\nEnter {MAX_INDIVIDUALS} individuals' names: "
+  errMsg = f"There must be {MAX_INDIVIDUALS} individuals"
 
-  def validator(individuals):
-    errMessage = f"There must be {MAX_INDIVIDUALS} individuals but got {len(individuals)}"
-
-    if len(individuals) != MAX_INDIVIDUALS:
-      return [False, errMessage]
-    else:
-      return [True]
-  
-  def mapFunc(indexAndName):
-    return DotMap({
-      "id": indexAndName[0],
-      "name": indexAndName[1].strip(),
-      "score": 0
-    })
-  
-  return createList(inputMessage, validator, mapFunc)
+  return createList(inputMsg, errMsg, MAX_INDIVIDUALS, MAX_INDIVIDUALS, mapMember)
 
 def createTeams():
-  inputMessage = f"\nEnter {MAX_TEAMS} teams' names: "
-  
-  def validator(teams):
-    errMessage = f"There must be {MAX_TEAMS} teams but got {len(teams)}"
+  inputMsg = f"\nEnter {MAX_TEAMS} teams' names: "
+  errMsg = f"There must be {MAX_TEAMS} teams"
 
-    if len(teams) != MAX_TEAMS:
-      return [False, errMessage]
-    else:
-      return [True]
-  
-  def mapFunc(indexAndName):
-    return DotMap({
-      "id": indexAndName[0],
-      "name": indexAndName[1].strip(),
-      "score": 0
-    })
-  
-  teams = createList(inputMessage, validator, mapFunc)
+  teams = createList(inputMsg, errMsg, MAX_TEAMS, MAX_TEAMS, mapMember)
+
   for team in teams:
-    inputMessage = f"Enter {MAX_TEAM_MEMBERS} members' names of team '{team.name}': "
+    inputMsg = f"Enter {MAX_TEAM_MEMBERS} members' names of team '{team.name}': "
+    errMsg = f"There must be {MAX_TEAM_MEMBERS} members in each team"
+    mapFunc = lambda indexAndName: indexAndName[1].strip()
 
-    def validator(members):
-      errMessage = f"Each team must have {MAX_TEAM_MEMBERS} members but got {len(members)}"
+    team.members = createList(inputMsg, errMsg, MAX_TEAM_MEMBERS, MAX_TEAM_MEMBERS, mapFunc)
+  
+  return teams
 
-      if len(members) != MAX_TEAM_MEMBERS:
-        return [False, errMessage]
-      else:
-        return [True]
-    
-    def mapFunc(indexAndName):
-      return indexAndName[1].strip()
+def createEvents():
+  inputMsg = f"\nEnter {MIN_EVENTS} or {MAX_EVENTS} events: "
+  errMsg = f"There must be only {MIN_EVENTS} or {MAX_EVENTS}"
 
-    team.members = createList(inputMessage, validator, mapFunc)
-  else:
-    return teams
-
-def createTakenPlaces(inputMessage, constant):
-  takenPlaces = input(inputMessage).split(",")
-
-  if len(takenPlaces) != constant:
-    exit(f"There must be {constant} IDs provided but got {len(takenPlaces)}")
-  else:
-    return list(map(lambda memberID: int(memberID), takenPlaces))
+  return createList(inputMsg, errMsg, MIN_EVENTS, MAX_EVENTS, mapEvent)
 
 # Get functions
-def getMember(memberID, members, errMessage):
+def getMember(memberID: int, members: list, errMsg: str) -> DotMap:
   foundMember = [member for member in members if member.id == memberID]
 
   if len(foundMember) != 1:
-    exit(errMessage)
+    exit(errMsg)
   else:
     return foundMember[0]
+
+def mapMember(indexAndName: tuple):
+  return DotMap({
+    "id": indexAndName[0],
+    "name": indexAndName[1].strip(),
+    "score": 0
+})
+
+def mapEvent(indexAndName: tuple):
+  return DotMap({
+    "id": indexAndName[0],
+    "name": indexAndName[1].strip(),
+    "scoreMultiplier": randrange(1, 5)
+  })
+
+# Print functions
+def printMembers(title: str, members: list, showScore: bool = False):
+  print(title)
+  for member in members:
+    memberMembers = f"({', '.join(member.members)}) " if member.members else ""
+    memberScore = f"({member.score or member.scoreMultiplier})" if showScore else ""
+
+    print(f"ID: {member.id}, {member.name} {memberMembers}{memberScore}")
 
 # Calculate functions
 def calcIndividuals():
   individuals = createIndividuals()
+  printMembers("\nIndividuals:", individuals)
 
-  print("\nIndividuals:")
-  for individual in individuals:
-    print(f"ID: {individual.id}, {individual.name} ({individual.score})")
-
-  events = createEvents()
-
-  print("\nEvents:")
-  for event in events:
-    print(f"ID: {event.id}, {event.name} ({event.scoreMultiplier})")
+  events = createEvents()  
+  printMembers("\nEvents:", events)
   
   print("\nTaken places:")
   for event in events:
-    inputMessage = f"Enter individuals' IDs in the order of taken place in '{event.name}': "
-    takenPlaces = createTakenPlaces(inputMessage, MAX_INDIVIDUALS)
+    inputMsg = f"Enter individuals' IDs in the order of taken place in '{event.name}': "
+    errMsg = f"There must be {MAX_INDIVIDUALS} IDs provided"
+    mapFunc = lambda indexAndID: int(indexAndID[1])
+
+    takenPlaces = createList(inputMsg, errMsg, MAX_INDIVIDUALS, MAX_INDIVIDUALS, mapFunc)
 
     for index, individualID in enumerate(takenPlaces):
-      errMessage = f"None or many individuals were found by provided ID: {individualID}"
-      individual = getMember(individualID, individuals, errMessage)
+      errMsg = f"None or many individuals were found by provided ID: \"{individualID}\""
+
+      individual = getMember(individualID, individuals, errMsg)
       individual.score += (MAX_INDIVIDUALS - index) * event.scoreMultiplier
   
   individuals.sort(key=lambda individual: individual.score, reverse=True)
-
-  print("\nScoreboard:")
-  for individual in individuals:
-    print(f"ID: {individual.id}, {individual.name} ({individual.score})")
+  printMembers("\nScoreboard:", individuals, True)
   
 def calcTeams():
   teams = createTeams()
-
-  print("\nTeams")
-  for team in teams:
-    print(f"ID: {team.id}, {team.name} ({', '.join(team.members)})")
+  printMembers("\nTeams:", teams)
   
   events = createEvents()
-
-  print("\nEvents:")
-  for event in events:
-    print(f"ID: {event.id}, {event.name} ({event.scoreMultiplier})")
+  printMembers("\nEvents:", events)
   
+  print("\nTaken places:")
   for event in events:
-    message = f"Enter teams' IDs in the order of taken place in '{event.name}': "
-    takenPlaces = createTakenPlaces(message, MAX_TEAMS)
+    inputMsg = f"Enter teams' IDs in the order of taken place in '{event.name}': "
+    errMsg = f"There must be {MAX_TEAMS} IDs provided"
+    mapFunc = lambda indexAndID: int(indexAndID[1])
+
+    takenPlaces = createList(inputMsg, errMsg, MAX_TEAMS, MAX_TEAMS, mapFunc)
 
     for index, teamID in enumerate(takenPlaces):
-      errMessage = f"None or many teams were found by provided ID: {teamID}"
-      team = getMember(teamID, teams, errMessage)
+      errMsg = f"None or many teams were found by provided ID: '{teamID}'"
+
+      team = getMember(teamID, teams, errMsg)
       team.score += (MAX_TEAMS - index) * event.scoreMultiplier
   
   teams.sort(key=lambda team: team.score, reverse=True)
+  printMembers("\nScoreboard:", teams, True)
 
-  print("\nScoreboard")
-  for team in teams:
-    print(f"ID: {team.id}, {team.name} ({team.score})")
-
+# main
 def main():
   clearConsole()
 
