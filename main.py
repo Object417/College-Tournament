@@ -1,17 +1,6 @@
-from dotmap import DotMap
-from random  import randrange
 from modules.clearConsole import clearConsole
-from modules.constants import *
-
-# Create functions
-# TODO: mapFunc: callableAny could be replaced by more specific one. E. g. callable -> DotMap
-def createList(inputMsg: str, errMsg: str, MIN_LEN: int, MAX_LEN: int, mapFunc: callable):
-  theList = input(inputMsg).split(",")
-
-  if len(theList) != MIN_LEN and len(theList) != MAX_LEN:
-    exit(errMsg)
-  else:
-    return list(map(mapFunc, enumerate(theList)))
+from modules.constants import MAX_INDIVIDUALS, MAX_TEAMS, MAX_TEAM_MEMBERS, MIN_EVENTS, MAX_EVENTS
+from modules.tools import createList, getMember, mapMember, mapEvent, printMembers
 
 # TODO: Could be replaced by universal function
 def createIndividuals():
@@ -41,34 +30,7 @@ def createEvents():
 
   return createList(inputMsg, errMsg, MIN_EVENTS, MAX_EVENTS, mapEvent)
 
-def getMember(memberID: int, members: list, errMsg: str) -> DotMap:
-  foundMember = [member for member in members if member.id == memberID]
-  return foundMember[0] if len(foundMember) == 1 else exit(errMsg)
-
-# TODO: Replace by universal function with a flag
-def mapMember(indexAndName: tuple):
-  return DotMap({
-    "id": indexAndName[0],
-    "name": indexAndName[1].strip(),
-    "score": 0
-})
-
-def mapEvent(indexAndName: tuple):
-  return DotMap({
-    "id": indexAndName[0],
-    "name": indexAndName[1].strip(),
-    "scoreMultiplier": randrange(1, 5)
-  })
-
-def printMembers(title: str, members: list, showScore: bool = False):
-  print(title)
-  for member in members:
-    memberMembers = f"({', '.join(member.members)}) " if member.members else ""
-    memberScore = f"({member.score or member.scoreMultiplier})" if showScore else ""
-
-    print(f"ID: {member.id}, {member.name} {memberMembers}{memberScore}")
-
-# TODO: Replace by universal function
+# TODO: Could be replaced by universal function
 def calcIndividuals():
   individuals = createIndividuals()
   printMembers("\nIndividuals:", individuals)
@@ -85,12 +47,12 @@ def calcIndividuals():
     takenPlaces = createList(inputMsg, errMsg, MAX_INDIVIDUALS, MAX_INDIVIDUALS, mapFunc)
 
     for index, individualID in enumerate(takenPlaces):
-      errMsg = f"None or many individuals were found by provided ID: \"{individualID}\""
+      errMsg = f"None or many individuals were found by provided ID: '{individualID}'"
 
       individual = getMember(individualID, individuals, errMsg)
       individual.score += (MAX_INDIVIDUALS - index) * event.scoreMultiplier
   
-  individuals.sort(key=lambda individual: individual.score, reverse=True)
+  individuals.sort(key = lambda individual: individual.score, reverse = True)
   printMembers("\nScoreboard:", individuals, True)
   
 def calcTeams():
@@ -114,7 +76,7 @@ def calcTeams():
       team = getMember(teamID, teams, errMsg)
       team.score += (MAX_TEAMS - index) * event.scoreMultiplier
   
-  teams.sort(key=lambda team: team.score, reverse=True)
+  teams.sort(key = lambda team: team.score, reverse = True)
   printMembers("\nScoreboard:", teams, True)
 
 # main
